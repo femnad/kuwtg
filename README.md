@@ -9,12 +9,14 @@ List your unread Github notifications via Github's notification API.
 Why?
 ----
 
-Some people may find it easier than skimming Github notifications via email or the website.
+There might exist such people* who may find it easier than skimming Github notifications via email or the website.
+
+*For some definition of people
 
 How?
 ----
 
-Run kuwtg thusly
+Run kuwtg thusly:
 
     ./kuwtg.py <access-token>
 
