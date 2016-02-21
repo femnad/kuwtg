@@ -19,9 +19,10 @@ def get_notifications(access_token):
     notifications = [Notification(
         notification['id'],
         notification['subject']['title'],
-        notification['subject']['type'],
+        notification['url'],
         notification['subject']['latest_comment_url'],
-        notification['url']
+        notification['subject']['type'],
+
     ) for notification in raw_notifications]
     return notifications
 
