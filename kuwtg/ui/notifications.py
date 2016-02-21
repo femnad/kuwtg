@@ -1,4 +1,6 @@
 # Package kuwtg.ui.notifications
+import curses
+
 from kuwtg.api.consumer import GithubAPIConsumer
 from kuwtg.ui import ListScroller
 
@@ -46,10 +48,10 @@ class NotificationsList(ListScroller):
         current_item = self._get_current_item()
         github_consumer = GithubAPIConsumer()
         body, links = github_consumer.get_notification_body(current_item.url)
-        if body is not None:
-            self._display_multiple_items(
-                [current_item.notification_type,
-                 body,], new_line_on_last_item=True)
+        self._display_single_item("{}: ".format(current_item.notification_type),
+                                  attribute=curses.color_pair(2), new_line=False)
+        self._display_single_item(current_item.title, attribute=curses.A_UNDERLINE)
+        self._display_single_item(body)
         if links is not None:
             comments_link = links['comments']['href']
             comments = github_consumer.get_comments(comments_link)
@@ -58,7 +60,7 @@ class NotificationsList(ListScroller):
                     self._display_multiple_items(
                         [comment['user'], comment['comment']],
                         new_line_on_last_item=True)
-        self.screen.move(0, 0)
+        self.screen.move(1, 0)
 
     def _show_all_notifications(self):
         self.screen.clear()

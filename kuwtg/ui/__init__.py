@@ -4,12 +4,17 @@ import logging
 import os
 import os.path
 
+
 class CursesObject(object):
 
     def __init__(self):
         self.screen = curses.initscr()
         curses.cbreak()
         curses.noecho()
+        curses.start_color()
+        curses.use_default_colors()
+        curses.init_pair(1, curses.COLOR_RED, -1)
+        curses.init_pair(2, curses.COLOR_GREEN, -1)
         self.screen.clear()
         self.screen.scrollok(1)
 
@@ -53,11 +58,16 @@ class ListScroller(CursesObject):
         current_y, current_x = self._get_current_coordinates()
         self.screen.move(current_y+1, 0)
 
-    def _display_single_item(self, item, max_chars=None, new_line=True):
-        if max_chars is None:
-            self.screen.addstr(item)
-        else:
-            self.screen.addnstr(item, max_chars)
+    def _display_single_item(self, item, max_chars=None, new_line=True,
+                             attribute=None):
+        display = self.screen.addstr \
+                  if max_chars is None else self.screen.addnstr
+        display_args = [item]
+        if max_chars is not None:
+            display_args.append(max_chars)
+        if attribute is not None:
+            display_args.append(attribute)
+        display(*display_args)
         if new_line:
             self._new_line()
 
