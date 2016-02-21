@@ -62,9 +62,15 @@ class ListScroller(CursesObject):
         if new_line:
             self._new_line()
 
-    def _display_multiple_items(self, *items, max_chars=None, new_line=True):
-        for item in items:
-            self._display_single_item(item)
+    def _display_multiple_items(self, items, max_chars=None, new_line=True):
+        items_length = len(items)
+        for index, item in enumerate(items):
+            if index < items_length - 1:
+                self._display_single_item(item, max_chars)
+            else:
+                self._display_single_item(item, max_chars, new_line=False)
+                current_y, current_x = self._get_current_coordinates()
+                self.screen.move(current_y, 0)
 
     def _get_max_coordinates(self):
         return self.screen.getmaxyx()

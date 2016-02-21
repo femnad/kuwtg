@@ -9,13 +9,11 @@ class NotificationsList(ListScroller):
 
     def initialize_list(self):
         max_y, max_x = self._get_max_coordinates()
-        while self._list_cursor < max_y - 1 and self._list_cursor < self._list_length:
-            current_item = self._list_contents[self._list_cursor]
-            self._display_single_item(current_item.title, max_x-2)
-            self._list_cursor += 1
+        self._display_multiple_items(
+            [item.title
+             for item in self._list_contents[:max_y]], max_x-1)
         current_y, current_x = self._get_current_coordinates()
-        self.screen.move(current_y - 1, 0)
-        self._list_cursor -= 1
+        self._list_cursor = max_y - 1
         self.screen.refresh()
         self.log("Initialization complete")
 
@@ -57,14 +55,14 @@ class NotificationsList(ListScroller):
         github_consumer = GithubAPIConsumer()
         body, links = github_consumer.get_notification_body(current_item.url)
         self._display_multiple_items(
-            current_item.notification_type,
-            body,
+            [current_item.notification_type,
+            body,]
         )
         if links is not None:
             comments_link = links['comments']['href']
             comments = github_consumer.get_notification_body(comments_link)
             for comment in comments:
-                self._display_multiple_items(comment['user'], comment['comment'])
+                self._display_multiple_items([comment['user'], comment['comment']])
         self.screen.move(0, 0)
 
     def _show_all_notifications(self):
@@ -75,7 +73,6 @@ class NotificationsList(ListScroller):
         max_y, max_x = self._get_max_coordinates()
         count = 0
         for item in self._list_contents[redraw_start:max_y-2]:
-            self.log("redraw count: {c}", {"c": count})
             self._display_single_item(item.title)
             count += 1
         self.screen.move(self._last_y_coordinate, 0)
