@@ -4,7 +4,7 @@ import logging
 import os
 import os.path
 
-from ..github_driver import get_notification_body
+from ..github_driver import get_notification_body, get_comments
 
 class CursesObject(object):
 
@@ -143,12 +143,16 @@ class ListScroller(CursesObject):
         self._last_y_coordinate = current_y
         self.screen.clear()
         current_item = self._get_current_item()
-        body = get_notification_body(current_item.latest_comment_url)
+        self.log("Getting body for {url}", dict(url=current_item.url))
+        body, links = get_notification_body(current_item.url)
         self._display_multiple_items(
             current_item.notification_type,
             body,
         )
-
+        if links is not None:
+            comments = get_comments(links['comments']['href'])
+            for comment in comments:
+                self._display_multiple_items(comment['user'], comment['comment'])
         self.screen.move(0, 0)
 
     def _show_all_notifications(self):

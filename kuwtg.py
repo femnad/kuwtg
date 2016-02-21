@@ -19,7 +19,7 @@ def get_notifications(access_token):
     notifications = [Notification(
         notification['id'],
         notification['subject']['title'],
-        notification['url'],
+        notification['subject']['url'],
         notification['subject']['latest_comment_url'],
         notification['subject']['type'],
 
