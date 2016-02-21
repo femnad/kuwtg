@@ -1,4 +1,5 @@
-class MockAPIConsumer(object):
+# Mock class
+class GithubAPIConsumer(object):
 
     NUMBER_OF_ITEMS = 50
     NUMBER_OF_COMMENTS = 10
