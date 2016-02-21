@@ -19,7 +19,10 @@ class GithubAPIConsumer(object):
 
     def get_notification_body(self, url):
         notification = self._get_json_response(url)
-        body = notification['body']
+        if 'body' in notification:
+            body = notification['body']
+        else:
+            body = None
         if '_links' in notification:
             links = notification['_links']
         else:

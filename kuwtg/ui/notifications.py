@@ -40,36 +40,60 @@ class NotificationsList(ListScroller):
         self.screen.refresh()
 
     def _show_current_notification(self):
-        self._last_cursor_position = self._list_cursor
         current_y, current_x = self._get_current_coordinates()
         self._last_y_coordinate = current_y
         self.screen.clear()
         current_item = self._get_current_item()
-        self.log("Getting body for {url}", dict(url=current_item.url))
         github_consumer = GithubAPIConsumer()
         body, links = github_consumer.get_notification_body(current_item.url)
-        self._display_multiple_items(
-            [current_item.notification_type,
-            body,]
-        )
+        if body is not None:
+            self._display_multiple_items(
+                [current_item.notification_type,
+                body,]
+            )
         if links is not None:
             comments_link = links['comments']['href']
             comments = github_consumer.get_notification_body(comments_link)
             for comment in comments:
-                self._display_multiple_items([comment['user'], comment['comment']])
+                if comment is not None:
+                    self._display_multiple_items([comment['user'], comment['comment']])
         self.screen.move(0, 0)
 
     def _show_all_notifications(self):
         self.screen.clear()
-        redraw_start = self._list_cursor - self._last_y_coordinate
+        """
+        Find out where we have start redrawing. For a screen of 5 height,
+        assume we were at y = 3 (1-indexed) previously and the list contained
+        15 items, where the y cursor was on the 10th item.
+
+        .
+        .
+        . y = 3, c = 10
+        .
+        .
+
+        So in order to show the same list state on redraw, we have to start
+        drawing from 8th item in the list and move to y cursor to its original
+        position
+
+        . c = 8
+        .
+        . y = 3
+        .
+        .
+
+        """
+        redraw_start = self._list_cursor - self._last_y_coordinate + 1
         if redraw_start < 0:
             redraw_start = 0
         max_y, max_x = self._get_max_coordinates()
-        count = 0
-        for item in self._list_contents[redraw_start:max_y-2]:
-            self._display_single_item(item.title)
-            count += 1
+        self.screen.move(0, 0)
+        list_end_increment = min(max_y, self._list_length)
+        self._display_multiple_items([item.title for item in
+            self._list_contents[redraw_start:redraw_start+list_end_increment]],
+                                     max_chars=max_x-1)
         self.screen.move(self._last_y_coordinate, 0)
+        self.screen.refresh()
 
     def _process_key(self, key):
         if key == ord('q'):

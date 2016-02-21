@@ -27,7 +27,6 @@ class ListScroller(CursesObject):
         self._list_contents = list_contents
         self._list_length = len(self._list_contents)
         self._list_cursor = 0
-        self._last_cursor_position = None
         self._last_y_coordinate = None
         self.logger = self._get_logger(log_file)
 
