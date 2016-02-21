@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# Package kuwtg.cmd.console
 import requests
 import sys
 
@@ -26,7 +26,7 @@ def get_notifications(access_token):
     ) for notification in raw_notifications]
     return notifications
 
-if __name__ == "__main__":
+def main():
     arguments = sys.argv
     if len(arguments) == 2:
         access_token = arguments[1]
