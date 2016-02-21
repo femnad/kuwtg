@@ -56,7 +56,11 @@ class ListScroller(CursesObject):
 
     def _new_line(self):
         current_y, current_x = self._get_current_coordinates()
-        self.screen.move(current_y+1, 0)
+        max_y, max_x = self._get_max_coordinates()
+        if current_y < max_y - 1:
+            self.screen.move(current_y+1, 0)
+        else:
+            self.screen.move(current_y, 0)
 
     def _display_single_item(self, item, max_chars=None, new_line=True,
                              attribute=None):

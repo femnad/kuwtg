@@ -67,10 +67,9 @@ class NotificationsList(ListScroller):
             comments_link = links['comments']['href']
             comments = github_consumer.get_comments(comments_link)
             for comment in comments:
-                if comment is not None:
-                    self._display_multiple_items(
-                        [comment['user'], comment['comment']],
-                        new_line_on_last_item=True)
+                self._display_multiple_items(
+                    [comment['user'], comment['comment']],
+                    new_line_on_last_item=True)
         self.screen.move(1, 0)
 
     def _show_all_notifications(self):
