@@ -115,3 +115,6 @@ class ListScroller(CursesObject):
         current_y, current_x = self._get_current_coordinates()
         self.log("x: {x}, y: {y}, cursor: {c}",
                  {"y": current_y, "x": current_x, "c": self._list_cursor})
+        max_y, max_x = self._get_max_coordinates()
+        self.log("max x: {x}, max y {y}, last_y {last}",
+                 {"x": max_x, "y": max_y, "last": self._last_y_coordinate})

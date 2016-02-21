@@ -2,13 +2,25 @@
 import requests
 
 
+class ResponseNotOkException(Exception):
+
+    def __init__(self, response):
+        self._response = response
+
+    def __str__(self):
+        return self._response.json()
+
+
 class GithubAPIConsumer(object):
 
     NOTIFICATIONS_ENDPOINT = 'https://api.github.com/notifications'
 
     def _get_json_response(self, url, headers=None):
         response = requests.get(url, headers=headers)
-        return response.json()
+        if response.ok:
+            return response.json()
+        else:
+            raise ResponseNotOkException(response)
 
     def get_notifications(self, access_token):
         return self._get_json_response(
