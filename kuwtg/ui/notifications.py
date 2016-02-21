@@ -24,25 +24,19 @@ class NotificationsList(ListScroller):
         new_y = current_y + y_diff
         self.log("new_y: {y}, list cursor: {c}",
                  {"c": self._list_cursor, "y": new_y})
-        if 0 <= self._list_cursor + y_diff < self._list_length:
-            current_item = self._list_contents[self._list_cursor]
-            moved_cursor = False
-            if 0 <= new_y < max_y:
+        new_cursor_position = self._list_cursor + y_diff
+        if 0 <= new_cursor_position < self._list_length:
+            if 0 <= new_y < max_y: # Moving the cursor is enough
                 self.screen.move(current_y + y_diff, current_x)
                 moved_cursor = True
-            elif new_y >= max_y:
-                self._display_single_item(current_item.title)
-                self.screen.move(current_y, 0)
+            else: # We have to scroll
+                next_item = self._list_contents[new_cursor_position]
                 self.screen.scroll(y_diff)
-                moved_cursor = True
-            elif new_y < 0:
-                self.screen.scroll(y_diff)
-                self._display_single_item(current_item.title)
-                current_y, current_x = self._get_current_coordinates()
+                max_chars = max_x - 1
+                self._display_single_item(
+                    next_item.title, max_chars=max_chars, new_line=False)
                 self.screen.move(current_y, 0)
-                moved_cursor = True
-            if moved_cursor:
-                self._list_cursor += y_diff
+            self._list_cursor += y_diff
         self.screen.refresh()
 
     def _show_current_notification(self):
