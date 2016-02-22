@@ -16,21 +16,19 @@ class NotificationsList(ListScroller):
         super(NotificationsList, self).__init__(list_contents, log_file)
         self._mode = self.Modes.list_view
 
-    def display_list(self, start_from=0, cursor_y_position=None):
+    def display_list(self, start_from=0):
         self.screen.clear()
+        self.screen.refresh()
         self.screen.move(0, 0)
+        current_y, current_x = self._get_current_coordinates()
         max_y, max_x = self._get_max_coordinates()
-        draw_until = min(max_y, self._list_length)
+        draw_until = min(max_y + start_from, self._list_length)
         self._display_multiple_items(
             [item.title
-             for item in self._list_contents[start_from:draw_until]], max_x-1)
+             for item in self._list_contents[start_from:draw_until]])
         # List cursor is on the last item which was drawn, so substract 1 from
         # `draw_until`
         self._list_cursor = draw_until - 1
-        if cursor_y_position is not None:
-            self.screen.move(cursor_y_position, 0)
-            self._list_cursor = cursor_y_position
-        self.screen.refresh()
 
     def _move_cursor_vertically(self, y_diff):
         current_y, current_x = self._get_current_coordinates()
@@ -46,7 +44,7 @@ class NotificationsList(ListScroller):
                 self.screen.scroll(y_diff)
                 max_chars = max_x - 1
                 self._display_single_item(
-                    next_item.title, max_chars=max_chars, new_line=False)
+                    next_item.title, new_line=False)
                 self.screen.move(current_y, 0)
             self._list_cursor += y_diff
         self.screen.refresh()
@@ -55,7 +53,9 @@ class NotificationsList(ListScroller):
         self._mode = self.Modes.detail_view
         current_y, current_x = self._get_current_coordinates()
         self._last_y_coordinate = current_y
+        max_y, max_x = self._get_max_coordinates()
         self.screen.clear()
+        self.screen.refresh()
         current_item = self._get_current_item()
         github_consumer = GithubAPIConsumer()
         body, links = github_consumer.get_notification_body(current_item.url)
@@ -68,8 +68,7 @@ class NotificationsList(ListScroller):
             comments = github_consumer.get_comments(comments_link)
             for comment in comments:
                 self._display_multiple_items(
-                    [comment['user'], comment['comment']],
-                    new_line_on_last_item=True)
+                    [comment['user'], comment['comment']])
         self.screen.move(1, 0)
 
     def _show_all_notifications(self):
@@ -100,8 +99,7 @@ class NotificationsList(ListScroller):
         redraw_start =  self._list_cursor - self._last_y_coordinate
         if redraw_start < 0:
             redraw_start = 0
-        self.display_list(redraw_start,
-                          cursor_y_position=self._last_y_coordinate)
+        self.display_list(redraw_start)
 
     def _process_key(self, key):
         if key == ord('q'):
