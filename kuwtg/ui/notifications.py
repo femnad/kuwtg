@@ -17,6 +17,25 @@ class NotificationsList(ListScroller):
         self._mode = self.Modes.list_view
         self._last_y_coordinate = None
 
+    def _get_current_line(self):
+        return self._list_contents[self._list_cursor]
+
+    def _draw_line(self, highlight=False):
+        current_line = self._get_current_line()
+        current_y, current_x = self._get_current_coordinates()
+        max_y, max_x = self._get_max_coordinates()
+        attribute = curses.A_REVERSE if highlight else None
+        if highlight:
+            self.screen.addnstr(current_y, 0, current_line.title, max_x-1, curses.A_REVERSE)
+        else:
+            self.screen.addnstr(current_y, 0, current_line.title, max_x-1, curses.A_NORMAL)
+
+    def _highlight_line(self):
+        self._draw_line(True)
+
+    def _unhighlight_line(self):
+        self._draw_line(False)
+
     def display_list(self, start_from=0):
         self.screen.clear()
         self.screen.refresh()
@@ -30,11 +49,13 @@ class NotificationsList(ListScroller):
         # List cursor is on the last item which was drawn, so substract 1 from
         # `draw_until`
         self._list_cursor = draw_until - 1
+        self._highlight_line()
 
     def _move_cursor_vertically(self, y_diff):
         current_y, current_x = self._get_current_coordinates()
         max_y, max_x = self._get_max_coordinates()
         new_y = current_y + y_diff
+        self._unhighlight_line()
         new_cursor_position = self._list_cursor + y_diff
         if 0 <= new_cursor_position < self._list_length:
             if 0 <= new_y < max_y: # Moving the cursor is enough
@@ -44,10 +65,9 @@ class NotificationsList(ListScroller):
                 next_item = self._list_contents[new_cursor_position]
                 self.screen.scroll(y_diff)
                 max_chars = max_x - 1
-                self._display_single_item(
-                    next_item.title, new_line=False)
                 self.screen.move(current_y, 0)
             self._list_cursor += y_diff
+        self._highlight_line()
         self.screen.refresh()
 
     def _render_lines(self, comment_body):
