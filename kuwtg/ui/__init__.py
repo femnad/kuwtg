@@ -80,6 +80,15 @@ class ListScroller(CursesObject):
         for item in items:
             self._display_single_item(item, limit_length, new_line, attributes)
 
+    def _display_multiline_item(self, item, attribute=None):
+        max_y, max_x = self._get_max_coordinates()
+        if len(item) < max_x:
+            self._display_single_item(item, attribute=attribute)
+        else:
+            head, tail = item[:max_x], item[max_x:]
+            self._display_single_item(head, attribute=attribute)
+            self._display_multiline_item(tail, attribute=attribute)
+
     def _get_max_coordinates(self):
         return self.screen.getmaxyx()
 

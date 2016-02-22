@@ -15,6 +15,7 @@ class NotificationsList(ListScroller):
     def __init__(self, list_contents, log_file=None):
         super(NotificationsList, self).__init__(list_contents, log_file)
         self._mode = self.Modes.list_view
+        self._last_y_coordinate = None
 
     def display_list(self, start_from=0):
         self.screen.clear()
@@ -49,6 +50,9 @@ class NotificationsList(ListScroller):
             self._list_cursor += y_diff
         self.screen.refresh()
 
+    def _render_lines(self, comment_body):
+        return [line for line in comment_body.split('\r\n') if len(line) > 0]
+
     def _show_current_notification(self):
         self._mode = self.Modes.detail_view
         current_y, current_x = self._get_current_coordinates()
@@ -59,17 +63,15 @@ class NotificationsList(ListScroller):
         current_item = self._get_current_item()
         github_consumer = GithubAPIConsumer()
         body, links = github_consumer.get_notification_body(current_item.url)
+        self._display_single_item(
+            current_item.repo_name, attribute=curses.color_pair(1))
         self._display_single_item("{}: ".format(current_item.notification_type),
                                   attribute=curses.color_pair(2), new_line=False)
         self._display_single_item(current_item.title, attribute=curses.A_UNDERLINE)
-        self._display_single_item(body)
-        if links is not None:
-            comments_link = links['comments']['href']
-            comments = github_consumer.get_comments(comments_link)
-            for comment in comments:
-                self._display_multiple_items(
-                    [comment['user'], comment['comment']])
-        self.screen.move(1, 0)
+        lines = self._render_lines(body)
+        for line in lines:
+            self._display_multiline_item(line)
+        self.screen.move(0, 0)
 
     def _show_all_notifications(self):
         self._mode = self.Modes.list_view
@@ -100,6 +102,7 @@ class NotificationsList(ListScroller):
         if redraw_start < 0:
             redraw_start = 0
         self.display_list(redraw_start)
+        self.screen.move(self._list_cursor, 0)
 
     def _process_key(self, key):
         if key == ord('q'):

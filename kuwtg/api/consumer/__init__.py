@@ -4,11 +4,11 @@ import requests
 
 class ResponseNotOkException(Exception):
 
-    def __init__(self, response):
-        self._response = response
+    def __init__(self, response_text):
+        self._response_text = response_text
 
     def __str__(self):
-        return self._response.json()
+        return self._response_text
 
 
 class GithubAPIConsumer(object):
@@ -20,7 +20,7 @@ class GithubAPIConsumer(object):
         if response.ok:
             return response.json()
         else:
-            raise ResponseNotOkException(response)
+            raise ResponseNotOkException(response.text)
 
     def get_notifications(self, access_token):
         return self._get_json_response(
