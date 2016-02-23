@@ -15,6 +15,7 @@ class CursesObject(object):
         curses.use_default_colors()
         curses.init_pair(1, curses.COLOR_RED, -1)
         curses.init_pair(2, curses.COLOR_GREEN, -1)
+        curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_MAGENTA)
         self.screen.clear()
         self.screen.scrollok(1)
 
@@ -22,6 +23,7 @@ class CursesObject(object):
         curses.nocbreak()
         curses.echo()
         curses.endwin()
+
 
 class ListScroller(CursesObject):
 

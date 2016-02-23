@@ -1,10 +1,11 @@
 # Package kuwtg.cmd.console
-import requests
 import sys
 
-from kuwtg.api.consumer import GithubAPIConsumer, ResponseNotOkException
+from kuwtg.api.consumer.github_api_consumer import GithubAPIConsumer
+from kuwtg.api.consumer.exceptions import ResponseNotOkException
 from kuwtg.obj import GithubNotification
 from kuwtg.ui.notifications import NotificationsList
+
 
 def main():
     arguments = sys.argv
@@ -13,10 +14,7 @@ def main():
         try:
             api_consumer = GithubAPIConsumer()
             notifications = api_consumer.get_notifications(access_token)
-            notifications_list = [GithubNotification(
-                notification['id'], notification['subject']['type'],
-                notification['subject']['title'], notification['subject']['url'],
-                notification['repository']['full_name'])
+            notifications_list = [GithubNotification(notification)
                                   for notification in notifications]
             notification_lister = NotificationsList(notifications_list)
             notification_lister.display_list()

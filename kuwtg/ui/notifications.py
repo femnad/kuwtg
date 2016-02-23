@@ -2,7 +2,7 @@
 import curses
 from enum import Enum
 
-from kuwtg.api.consumer import GithubAPIConsumer
+from kuwtg.api.consumer.github_api_consumer import GithubAPIConsumer
 from kuwtg.ui import ListScroller
 
 
@@ -24,11 +24,13 @@ class NotificationsList(ListScroller):
         current_line = self._get_current_line()
         current_y, current_x = self._get_current_coordinates()
         max_y, max_x = self._get_max_coordinates()
-        attribute = curses.A_REVERSE if highlight else None
         if highlight:
-            self.screen.addnstr(current_y, 0, current_line.title, max_x-1, curses.A_REVERSE)
+            self.screen.addnstr(
+                current_y, 0, current_line.title, max_x-1,
+                curses.color_pair(3))
         else:
-            self.screen.addnstr(current_y, 0, current_line.title, max_x-1, curses.A_NORMAL)
+            self.screen.addnstr(
+                current_y, 0, current_line.title, max_x-1, curses.A_NORMAL)
 
     def _highlight_line(self):
         self._draw_line(True)
@@ -58,13 +60,10 @@ class NotificationsList(ListScroller):
         self._unhighlight_line()
         new_cursor_position = self._list_cursor + y_diff
         if 0 <= new_cursor_position < self._list_length:
-            if 0 <= new_y < max_y: # Moving the cursor is enough
+            if 0 <= new_y < max_y:  # Moving the cursor is enough
                 self.screen.move(current_y + y_diff, current_x)
-                moved_cursor = True
-            else: # We have to scroll
-                next_item = self._list_contents[new_cursor_position]
+            else:  # We have to scroll
                 self.screen.scroll(y_diff)
-                max_chars = max_x - 1
                 self.screen.move(current_y, 0)
             self._list_cursor += y_diff
         self._highlight_line()
@@ -85,9 +84,11 @@ class NotificationsList(ListScroller):
         body, links = github_consumer.get_notification_body(current_item.url)
         self._display_single_item(
             current_item.repo_name, attribute=curses.color_pair(1))
-        self._display_single_item("{}: ".format(current_item.notification_type),
-                                  attribute=curses.color_pair(2), new_line=False)
-        self._display_single_item(current_item.title, attribute=curses.A_UNDERLINE)
+        self._display_single_item(
+            "{}: ".format(current_item.notification_type),
+            attribute=curses.color_pair(2), new_line=False)
+        self._display_single_item(
+            current_item.title, attribute=curses.A_UNDERLINE)
         lines = self._render_lines(body)
         for line in lines:
             self._display_multiline_item(line)
@@ -118,7 +119,7 @@ class NotificationsList(ListScroller):
         .
 
         """
-        redraw_start =  self._list_cursor - self._last_y_coordinate
+        redraw_start = self._list_cursor - self._last_y_coordinate
         if redraw_start < 0:
             redraw_start = 0
         self.display_list(redraw_start)

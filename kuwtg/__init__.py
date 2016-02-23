@@ -1,5 +1,6 @@
 # Package: kutwg
 
+
 class Notification(object):
 
     def __init__(self, notification_id=None, title=None, url=None,
