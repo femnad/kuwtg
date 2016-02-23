@@ -35,7 +35,7 @@ class NotificationsList(ListScroller):
     def _unhighlight_line(self):
         self._draw_line(False)
 
-    def display_list(self, start_from=0, highlight_y_coordinate=None):
+    def display_list(self, start_from=0):
         self.screen.clear()
         self.screen.refresh()
         self.screen.move(0, 0)
@@ -44,14 +44,10 @@ class NotificationsList(ListScroller):
         draw_until = min(max_y + start_from, self._list_length)
         for item in self._list_contents[start_from:draw_until-1]:
             self._display_single_item(item.title)
-        self._redraw_line(self._list_contents[draw_until-1].title)
+        self._draw_line(highlight=True)
         # List cursor is on the last item which was drawn, so substract 1 from
         # `draw_until`
         self._list_cursor = draw_until - 1
-        if highlight_y_coordinate is not None:
-            self.screen.move(highlight_y_coordinate, 0)
-        self.screen.clear()
-        self.screen.refresh()
         self._highlight_line()
 
     def _move_cursor_vertically(self, y_diff):
@@ -82,6 +78,7 @@ class NotificationsList(ListScroller):
         github_consumer = GithubAPIConsumer()
         body, links = github_consumer.get_notification_body(current_item.url)
         self.screen.clear()
+        self.screen.refresh()
         self._display_single_item(
             current_item.repo_name, attribute=curses.color_pair(1))
         self._display_single_item(
@@ -97,6 +94,7 @@ class NotificationsList(ListScroller):
     def _show_all_notifications(self):
         self._mode = self.Modes.list_view
         self.screen.clear()
+        self.screen.refresh()
         """
         Find out where we have start redrawing. For a screen of 5 height,
         assume we were at y = 2 (0-indexed) previously and the list contained
@@ -122,7 +120,7 @@ class NotificationsList(ListScroller):
         redraw_start = self._list_cursor - self._last_y_coordinate
         if redraw_start < 0:
             redraw_start = 0
-        self.display_list(redraw_start, self._last_y_coordinate)
+        self.display_list(redraw_start)
 
     def _process_key(self, key):
         if key == ord('q'):

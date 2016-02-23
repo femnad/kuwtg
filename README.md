@@ -22,6 +22,8 @@ Run kuwtg thusly:
 
 The access token must be permitted to access your notifications.
 
+Use 'k' and 'j' to navigate up and down in the list view, 'l' to view the current notification, 'h' to navigate back to the list, 'q' to quit.
+
 Requires?
 ---------
 
