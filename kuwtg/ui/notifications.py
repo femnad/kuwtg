@@ -22,15 +22,12 @@ class NotificationsList(ListScroller):
 
     def _draw_line(self, highlight=False):
         current_line = self._get_current_line()
-        current_y, current_x = self._get_current_coordinates()
-        max_y, max_x = self._get_max_coordinates()
         if highlight:
-            self.screen.addnstr(
-                current_y, 0, current_line.title, max_x-1,
-                curses.color_pair(3))
+            self._redraw_line(current_line.title,
+                              attribute=curses.color_pair(3))
         else:
-            self.screen.addnstr(
-                current_y, 0, current_line.title, max_x-1, curses.A_NORMAL)
+            self._redraw_line(current_line.title,
+                              attribute=curses.A_NORMAL)
 
     def _highlight_line(self):
         self._draw_line(True)
@@ -38,19 +35,23 @@ class NotificationsList(ListScroller):
     def _unhighlight_line(self):
         self._draw_line(False)
 
-    def display_list(self, start_from=0):
+    def display_list(self, start_from=0, highlight_y_coordinate=None):
         self.screen.clear()
         self.screen.refresh()
         self.screen.move(0, 0)
         current_y, current_x = self._get_current_coordinates()
         max_y, max_x = self._get_max_coordinates()
         draw_until = min(max_y + start_from, self._list_length)
-        self._display_multiple_items(
-            [item.title
-             for item in self._list_contents[start_from:draw_until]])
+        for item in self._list_contents[start_from:draw_until-1]:
+            self._display_single_item(item.title)
+        self._redraw_line(self._list_contents[draw_until-1].title)
         # List cursor is on the last item which was drawn, so substract 1 from
         # `draw_until`
         self._list_cursor = draw_until - 1
+        if highlight_y_coordinate is not None:
+            self.screen.move(highlight_y_coordinate, 0)
+        self.screen.clear()
+        self.screen.refresh()
         self._highlight_line()
 
     def _move_cursor_vertically(self, y_diff):
@@ -73,15 +74,14 @@ class NotificationsList(ListScroller):
         return [line for line in comment_body.split('\r\n') if len(line) > 0]
 
     def _show_current_notification(self):
+        self._unhighlight_line()
         self._mode = self.Modes.detail_view
         current_y, current_x = self._get_current_coordinates()
         self._last_y_coordinate = current_y
-        max_y, max_x = self._get_max_coordinates()
-        self.screen.clear()
-        self.screen.refresh()
         current_item = self._get_current_item()
         github_consumer = GithubAPIConsumer()
         body, links = github_consumer.get_notification_body(current_item.url)
+        self.screen.clear()
         self._display_single_item(
             current_item.repo_name, attribute=curses.color_pair(1))
         self._display_single_item(
@@ -122,8 +122,7 @@ class NotificationsList(ListScroller):
         redraw_start = self._list_cursor - self._last_y_coordinate
         if redraw_start < 0:
             redraw_start = 0
-        self.display_list(redraw_start)
-        self.screen.move(self._list_cursor, 0)
+        self.display_list(redraw_start, self._last_y_coordinate)
 
     def _process_key(self, key):
         if key == ord('q'):

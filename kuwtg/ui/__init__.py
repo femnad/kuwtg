@@ -64,10 +64,13 @@ class ListScroller(CursesObject):
             self.screen.move(current_y, 0)
 
     def _display_single_item(self, item, limit_length=True, new_line=True,
-                             attribute=None):
+                             attribute=None, start_coordinates=None):
         display = self.screen.addnstr \
                   if limit_length else self.screen.addstr
-        display_args = [item]
+        display_args = []
+        if start_coordinates is not None:
+            display_args.extend(start_coordinates)
+        display_args.append(item)
         if limit_length:
             max_y, max_x = self._get_max_coordinates()
             display_args.append(max_x - 1)
@@ -76,6 +79,13 @@ class ListScroller(CursesObject):
         display(*display_args)
         if new_line:
             self._new_line()
+
+    def _redraw_line(self, item, attribute=None):
+        current_y, current_x = self._get_current_coordinates()
+        self._display_single_item(item,
+                                  start_coordinates=(current_y, 0),
+                                  attribute=attribute,
+                                  new_line=False)
 
     def _display_multiple_items(self, items, limit_length=True, new_line=True,
                                 attributes=None):
