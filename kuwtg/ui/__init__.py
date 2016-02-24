@@ -27,37 +27,6 @@ class CursesObject(object):
         curses.echo()
         curses.endwin()
 
-
-class ListScroller(CursesObject):
-
-    DEFAULT_LOG_FILE = '~/.local/share/kuwtg/logs/kuwtg.log'
-
-    def __init__(self, list_contents, log_file=None):
-        super(ListScroller, self).__init__()
-        self._list_contents = list_contents
-        self._list_length = len(self._list_contents)
-        self._list_cursor = 0
-        self.logger = self._get_logger(log_file)
-
-    def _get_logger(self, file_name):
-        if file_name is None:
-            file_name = os.path.expanduser(self.DEFAULT_LOG_FILE)
-            log_dir = os.path.dirname(file_name)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler(file_name)
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
-        return logger
-
-    def log(self, message, variables=None):
-        if variables is None:
-            variables = {}
-        formatted_message = message.format(**variables)
-        self.logger.debug(formatted_message)
-
     def _new_line(self):
         current_y, current_x = self._get_current_coordinates()
         max_y, max_x = self._get_max_coordinates()
@@ -110,22 +79,36 @@ class ListScroller(CursesObject):
     def _get_current_item(self):
         return self._list_contents[self._list_cursor]
 
-    def move_up(self):
-        self._move_cursor_vertically(-1)
 
-    def move_down(self):
-        self._move_cursor_vertically(1)
+class ListScroller(CursesObject):
 
-    def move_to_top(self):
-        current_y, current_x = self._get_current_coordinates()
-        self.screen.move(0, current_x)
-        self._list_cursor -= current_y
+    DEFAULT_LOG_FILE = '~/.local/share/kuwtg/logs/kuwtg.log'
 
-    def move_to_bottom(self):
-        current_y, current_x = self._get_current_coordinates()
-        max_y, max_x = self._get_max_coordinates()
-        self.screen.move(max_y - 1, current_x)
-        self._list_cursor += (max_y - current_y - 1)
+    def __init__(self, list_contents, log_file=None):
+        super(ListScroller, self).__init__()
+        self._list_contents = list_contents
+        self._list_length = len(self._list_contents)
+        self._list_cursor = 0
+        self.logger = self._get_logger(log_file)
+
+    def _get_logger(self, file_name):
+        if file_name is None:
+            file_name = os.path.expanduser(self.DEFAULT_LOG_FILE)
+            log_dir = os.path.dirname(file_name)
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(file_name)
+        fh.setLevel(logging.DEBUG)
+        logger.addHandler(fh)
+        return logger
+
+    def log(self, message, variables=None):
+        if variables is None:
+            variables = {}
+        formatted_message = message.format(**variables)
+        self.logger.debug(formatted_message)
 
     def debug(self):
         current_y, current_x = self._get_current_coordinates()
@@ -134,3 +117,37 @@ class ListScroller(CursesObject):
         max_y, max_x = self._get_max_coordinates()
         self.log("max x: {x}, max y {y}, last_y {last}",
                  {"x": max_x, "y": max_y, "last": self._last_y_coordinate})
+
+    def _render_lines(self, comment_body):
+        return ' '.join([line
+                         for line in comment_body.split('\r\n')
+                         if len(line) > 0])
+
+
+class NotificationDetail(ListScroller):
+
+    def __init__(self, notification_item, notification_starter, comments):
+        super(NotificationDetail, self).__init__(comments)
+        self._notification_item = notification_item
+        self._notification_starter = notification_starter
+        self._comments = comments
+
+    def draw(self):
+        self.screen.clear()
+        self.screen.refresh()
+        self._display_single_item(
+            self._notification_item.repo_name, attribute=curses.color_pair(1))
+        self._display_single_item(
+            "{}: ".format(self._notification_item.notification_type),
+            attribute=curses.color_pair(2), new_line=False)
+        self._display_single_item(
+            self._notification_item.title, attribute=curses.A_UNDERLINE)
+        self._display_single_item(
+            self._notification_starter.user, attribute=curses.color_pair(4))
+        lines = self._render_lines(self._notification_starter.body)
+        self._display_multiline_item(lines)
+        for comment in self._comments:
+            self._display_single_item(
+                comment.user, attribute=curses.color_pair(4))
+            rendered_comment = self._render_lines(comment.body)
+            self._display_multiline_item(rendered_comment)

@@ -3,7 +3,7 @@ import curses
 from enum import Enum
 
 from kuwtg.api.consumer.github_api_consumer import GithubAPIConsumer
-from kuwtg.ui import ListScroller
+from kuwtg.ui import ListScroller, NotificationDetail
 
 
 class NotificationsList(ListScroller):
@@ -66,10 +66,22 @@ class NotificationsList(ListScroller):
         self._highlight_line()
         self.screen.refresh()
 
-    def _render_lines(self, comment_body):
-        return ' '.join([line
-                         for line in comment_body.split('\r\n')
-                         if len(line) > 0])
+    def move_up(self):
+        self._move_cursor_vertically(-1)
+
+    def move_down(self):
+        self._move_cursor_vertically(1)
+
+    def move_to_top(self):
+        current_y, current_x = self._get_current_coordinates()
+        self.screen.move(0, current_x)
+        self._list_cursor -= current_y
+
+    def move_to_bottom(self):
+        current_y, current_x = self._get_current_coordinates()
+        max_y, max_x = self._get_max_coordinates()
+        self.screen.move(max_y - 1, current_x)
+        self._list_cursor += (max_y - current_y - 1)
 
     def _show_current_notification(self):
         self._unhighlight_line()
@@ -80,25 +92,9 @@ class NotificationsList(ListScroller):
         github_consumer = GithubAPIConsumer()
         starter, comments = github_consumer.get_notification_body(
             current_item.url)
-        self.screen.clear()
-        self.screen.refresh()
-        self._display_single_item(
-            current_item.repo_name, attribute=curses.color_pair(1))
-        self._display_single_item(
-            "{}: ".format(current_item.notification_type),
-            attribute=curses.color_pair(2), new_line=False)
-        self._display_single_item(
-            current_item.title, attribute=curses.A_UNDERLINE)
-        self._display_single_item(
-            starter.user, attribute=curses.color_pair(4))
-        lines = self._render_lines(starter.body)
-        self._display_multiline_item(lines)
-        for comment in comments:
-            self._display_single_item(
-                comment.user, attribute=curses.color_pair(4))
-            rendered_comment = self._render_lines(comment.body)
-            self._display_multiline_item(rendered_comment)
-        self.screen.move(0, 0)
+        notification_detail = NotificationDetail(
+            current_item, starter, comments)
+        notification_detail.draw()
 
     def _show_all_notifications(self):
         self._mode = self.Modes.list_view
