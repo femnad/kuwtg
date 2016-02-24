@@ -9,9 +9,10 @@ setup(
               'kuwtg.api.consumer',
               'kuwtg.cmd',
               'kuwtg.obj',
-              'kuwtg.ui',],
+              'kuwtg.ui',
+              'kuwtg.utils'],
     zip_safe=False,
-    entry_points = {
+    entry_points={
         'console_scripts': ['kuwtg=kuwtg.cmd.console:main'],
     }
 )

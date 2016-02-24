@@ -4,6 +4,8 @@ import logging
 import os
 import os.path
 
+from kuwtg.utils import break_lines
+
 
 class CursesObject(object):
 
@@ -95,12 +97,9 @@ class ListScroller(CursesObject):
 
     def _display_multiline_item(self, item, attribute=None):
         max_y, max_x = self._get_max_coordinates()
-        if len(item) < max_x:
-            self._display_single_item(item, attribute=attribute)
-        else:
-            head, tail = item[:max_x], item[max_x:]
-            self._display_single_item(head, attribute=attribute)
-            self._display_multiline_item(tail, attribute=attribute)
+        broken_lines = break_lines(item, max_x)
+        for line in broken_lines:
+            self._display_single_item(line, attribute=attribute)
 
     def _get_max_coordinates(self):
         return self.screen.getmaxyx()
