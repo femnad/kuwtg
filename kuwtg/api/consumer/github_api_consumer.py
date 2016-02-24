@@ -2,6 +2,7 @@
 import requests
 
 from kuwtg.api.consumer.exceptions import ResponseNotOkException
+from kuwtg.obj import GithubComment
 
 
 class GithubAPIConsumer(object):
@@ -22,20 +23,14 @@ class GithubAPIConsumer(object):
                 "user-agent": "femnad/kuwtg"
             })
 
+    def _get_comments(self, url):
+        raw_comments = self._get_json_response(url)
+        comments = [GithubComment(comment) for comment in raw_comments]
+        return comments
+
     def get_notification_body(self, url):
         notification = self._get_json_response(url)
-        if 'body' in notification:
-            body = notification['body']
-        else:
-            body = None
-        if '_links' in notification:
-            links = notification['_links']
-        else:
-            links = None
-        return body, links
-
-    def get_comments(self, url):
-        raw_comments = self._get_json_response(url)
-        comments = [{"user": comment['user']['login'],
-                     "comment": comment['body']} for comment in raw_comments]
-        return comments
+        starter_comment = GithubComment(notification)
+        comments_url = notification['comments_url']
+        comments = self._get_comments(comments_url)
+        return starter_comment, comments

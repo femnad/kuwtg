@@ -31,3 +31,20 @@ class GithubNotification(object):
     @property
     def repo_name(self):
         return self._repo_name
+
+
+class GithubComment(object):
+
+    def __init__(self, comment):
+        user = comment['user']['login']
+        body = comment['body']
+        self._user = user
+        self._body = body
+
+    @property
+    def user(self):
+        return self._user
+
+    @property
+    def body(self):
+        return self._body

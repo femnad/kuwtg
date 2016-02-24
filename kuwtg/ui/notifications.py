@@ -67,7 +67,9 @@ class NotificationsList(ListScroller):
         self.screen.refresh()
 
     def _render_lines(self, comment_body):
-        return [line for line in comment_body.split('\r\n') if len(line) > 0]
+        return ' '.join([line
+                         for line in comment_body.split('\r\n')
+                         if len(line) > 0])
 
     def _show_current_notification(self):
         self._unhighlight_line()
@@ -76,7 +78,8 @@ class NotificationsList(ListScroller):
         self._last_y_coordinate = current_y
         current_item = self._get_current_item()
         github_consumer = GithubAPIConsumer()
-        body, links = github_consumer.get_notification_body(current_item.url)
+        starter, comments = github_consumer.get_notification_body(
+            current_item.url)
         self.screen.clear()
         self.screen.refresh()
         self._display_single_item(
@@ -86,9 +89,15 @@ class NotificationsList(ListScroller):
             attribute=curses.color_pair(2), new_line=False)
         self._display_single_item(
             current_item.title, attribute=curses.A_UNDERLINE)
-        lines = self._render_lines(body)
-        for line in lines:
-            self._display_multiline_item(line)
+        self._display_single_item(
+            starter.user, attribute=curses.color_pair(4))
+        lines = self._render_lines(starter.body)
+        self._display_multiline_item(lines)
+        for comment in comments:
+            self._display_single_item(
+                comment.user, attribute=curses.color_pair(4))
+            rendered_comment = self._render_lines(comment.body)
+            self._display_multiline_item(rendered_comment)
         self.screen.move(0, 0)
 
     def _show_all_notifications(self):

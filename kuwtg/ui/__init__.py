@@ -16,6 +16,7 @@ class CursesObject(object):
         curses.init_pair(1, curses.COLOR_RED, -1)
         curses.init_pair(2, curses.COLOR_GREEN, -1)
         curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_MAGENTA)
+        curses.init_pair(4, curses.COLOR_BLUE, -1)
         self.screen.clear()
         self.screen.scrollok(1)
 
