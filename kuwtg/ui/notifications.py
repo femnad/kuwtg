@@ -3,6 +3,7 @@ import curses
 from enum import Enum
 
 from kuwtg.api.consumer.github_api_consumer import GithubAPIConsumer
+from kuwtg.config import Configuration
 from kuwtg.ui import ListScroller, NotificationDetail
 
 
@@ -16,6 +17,7 @@ class NotificationsList(ListScroller):
         super(NotificationsList, self).__init__(list_contents, log_file)
         self._mode = self.Modes.list_view
         self._last_y_coordinate = None
+        self._configuration = Configuration()
 
     def _get_current_line(self):
         return self._list_contents[self._list_cursor]
@@ -89,12 +91,13 @@ class NotificationsList(ListScroller):
         current_y, current_x = self._get_current_coordinates()
         self._last_y_coordinate = current_y
         current_item = self._get_current_item()
-        github_consumer = GithubAPIConsumer()
+        github_consumer = GithubAPIConsumer(self._configuration.access_token)
         starter, comments = github_consumer.get_notification_body(
             current_item.url)
         notification_detail = NotificationDetail(
             current_item, starter, comments)
         notification_detail.draw()
+        self._show_all_notifications()
 
     def _show_all_notifications(self):
         self._mode = self.Modes.list_view
@@ -144,9 +147,6 @@ class NotificationsList(ListScroller):
                 self.move_to_bottom()
             elif key == ord('l'):
                 self._show_current_notification()
-        elif self._mode == self.Modes.detail_view:
-            if key == ord('h'):
-                self._show_all_notifications()
         return True
 
     def loop(self):

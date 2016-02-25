@@ -8,6 +8,7 @@ setup(
               'kuwtg.api',
               'kuwtg.api.consumer',
               'kuwtg.cmd',
+              'kuwtg.config',
               'kuwtg.obj',
               'kuwtg.ui',
               'kuwtg.utils'],

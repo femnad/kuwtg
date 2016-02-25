@@ -18,11 +18,16 @@ How?
 
 Run kuwtg thusly:
 
-    ./kuwtg.py <access-token>
+    kuwtg
+
+Put your access token in `~/.config/kuwtg/kuwtg.conf` thusly:
+
+    [tokens]
+    access-token = <your-access-token-here>
 
 The access token must be permitted to access your notifications.
 
-Use 'k' and 'j' to navigate up and down in the list view, 'l' to view the current notification, 'h' to navigate back to the list, 'q' to quit.
+Use 'k' and 'j' to navigate up and down in the list view, 'l' to view the current notification, 'q' to quit. In the notification detail 'h' or 'q' to navigate back to the list.
 
 Requires?
 ---------

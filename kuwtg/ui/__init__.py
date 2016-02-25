@@ -132,6 +132,23 @@ class NotificationDetail(ListScroller):
         self._notification_starter = notification_starter
         self._comments = comments
 
+    def _get_height_of_comment_body(self, comment_body):
+        max_y, max_x = self._get_max_coordinates()
+        return len(break_lines(comment_body, max_x))
+
+    def _comment_will_fit(self, comment):
+        current_y, current_x = self._get_current_coordinates()
+        max_y, max_x = self._get_max_coordinates()
+        # Assuming user part of a comment is 1
+        comment_height = 1 + self._get_height_of_comment_body(comment.body)
+        return comment_height < max_y - current_y
+
+    def _display_comment(self, comment):
+        self._display_single_item(
+            comment.user, attribute=curses.color_pair(4))
+        rendered_comment = self._render_lines(comment.body)
+        self._display_multiline_item(rendered_comment)
+
     def draw(self):
         self.screen.clear()
         self.screen.refresh()
@@ -146,8 +163,13 @@ class NotificationDetail(ListScroller):
             self._notification_starter.user, attribute=curses.color_pair(4))
         lines = self._render_lines(self._notification_starter.body)
         self._display_multiline_item(lines)
+
         for comment in self._comments:
-            self._display_single_item(
-                comment.user, attribute=curses.color_pair(4))
-            rendered_comment = self._render_lines(comment.body)
-            self._display_multiline_item(rendered_comment)
+            self._display_comment(comment)
+
+        while True:
+            key = self.screen.getch()
+            if key in [ord('q'), ord('h')]:
+                self.screen.clear()
+                self.screen.refresh()
+                break

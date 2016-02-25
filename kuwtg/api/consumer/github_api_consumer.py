@@ -9,19 +9,23 @@ class GithubAPIConsumer(object):
 
     NOTIFICATIONS_ENDPOINT = 'https://api.github.com/notifications'
 
+    def __init__(self, access_token):
+        self._access_token = access_token
+        self._authentication_headers = {
+            "authorization": "token {}".format(access_token),
+            "user-agent": "femnad/kuwtg"
+        }
+
     def _get_json_response(self, url, headers=None):
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=self._authentication_headers)
         if response.ok:
             return response.json()
         else:
             raise ResponseNotOkException(response.text)
 
-    def get_notifications(self, access_token):
+    def get_notifications(self):
         return self._get_json_response(
-            self.NOTIFICATIONS_ENDPOINT, headers={
-                "authorization": "token {}".format(access_token),
-                "user-agent": "femnad/kuwtg"
-            })
+            self.NOTIFICATIONS_ENDPOINT)
 
     def _get_comments(self, url):
         raw_comments = self._get_json_response(url)
