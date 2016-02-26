@@ -10,8 +10,8 @@ def _break_lines(item, max_length):
         else:
             whole_line = head[:rightmost_space_index]
             tail = head[rightmost_space_index:] + tail
-        return [whole_line] + break_lines(tail, max_length)
+        return [whole_line.strip()] + break_lines(tail.strip(), max_length)
 
 
 def break_lines(item, max_length):
-    return [line.strip() for line in _break_lines(item, max_length)]
+    return [line for line in _break_lines(item, max_length) if len(line) > 0]

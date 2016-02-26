@@ -123,6 +123,29 @@ class ListScroller(CursesObject):
                          for line in comment_body.split('\r\n')
                          if len(line) > 0])
 
+    def _render_lines_as_is(self, comment_body):
+        max_y, max_x = self._get_max_coordinates()
+        rendered_lines = ''.join([line for line in comment_body.split('\r\n')
+                                  if len(line) > 0])
+        broken_lines = break_lines(rendered_lines, max_x)
+        logging.debug(broken_lines)
+        return [Drawable(line) for line in broken_lines]
+
+
+class Drawable(object):
+
+    def __init__(self, content, attribute=curses.A_NORMAL):
+        self._content = content
+        self._attribute = attribute
+
+    @property
+    def content(self):
+        return self._content
+
+    @property
+    def attribute(self):
+        return self._attribute
+
 
 class NotificationDetail(ListScroller):
 
@@ -131,41 +154,57 @@ class NotificationDetail(ListScroller):
         self._notification_item = notification_item
         self._notification_starter = notification_starter
         self._comments = comments
+        self._visible_content = []
 
-    def _get_height_of_comment_body(self, comment_body):
-        max_y, max_x = self._get_max_coordinates()
-        return len(break_lines(comment_body, max_x))
+    def _add_to_visible_content(self, drawable):
+        if isinstance(drawable, list):
+            self._visible_content.extend(drawable)
+        else:
+            self._visible_content.append(drawable)
 
-    def _comment_will_fit(self, comment):
+    def _draw(self, drawable):
         current_y, current_x = self._get_current_coordinates()
         max_y, max_x = self._get_max_coordinates()
-        # Assuming user part of a comment is 1
-        comment_height = 1 + self._get_height_of_comment_body(comment.body)
-        return comment_height < max_y - current_y
+        self.screen.addstr(drawable.content, drawable.attribute)
+        if current_y < max_y - 1:
+            self.screen.move(current_y+1, 0)
+        else:
+            self.screen.move(current_y, 0)
 
-    def _display_comment(self, comment):
-        self._display_single_item(
-            comment.user, attribute=curses.color_pair(4))
-        rendered_comment = self._render_lines(comment.body)
-        self._display_multiline_item(rendered_comment)
+    def _can_draw_more(self):
+        current_y, current_x = self._get_current_coordinates()
+        max_y, max_x = self._get_max_coordinates()
+        return current_y < max_y - 1
 
     def draw(self):
         self.screen.clear()
         self.screen.refresh()
-        self._display_single_item(
-            self._notification_item.repo_name, attribute=curses.color_pair(1))
-        self._display_single_item(
-            "{}: ".format(self._notification_item.notification_type),
-            attribute=curses.color_pair(2), new_line=False)
-        self._display_single_item(
-            self._notification_item.title, attribute=curses.A_UNDERLINE)
-        self._display_single_item(
-            self._notification_starter.user, attribute=curses.color_pair(4))
-        lines = self._render_lines(self._notification_starter.body)
-        self._display_multiline_item(lines)
+        self._add_to_visible_content(Drawable(
+            self._notification_item.repo_name, attribute=curses.color_pair(1)))
+        self._add_to_visible_content(
+            Drawable("{}: ".format(self._notification_item.notification_type),
+                     curses.color_pair(2)))
+        self._add_to_visible_content(Drawable(
+            self._notification_item.title, curses.A_UNDERLINE))
+        self._add_to_visible_content(Drawable(
+            self._notification_starter.user, curses.color_pair(4)))
+        lines = self._render_lines_as_is(self._notification_starter.body)
+        self._add_to_visible_content(lines)
 
         for comment in self._comments:
-            self._display_comment(comment)
+            comment_drawable = Drawable(comment.user, curses.color_pair(4))
+            self._add_to_visible_content(comment_drawable)
+            rendered_comment = self._render_lines_as_is(comment.body)
+            self._add_to_visible_content(rendered_comment)
+
+        last_cursor = 0
+        for index, content in enumerate(self._visible_content):
+            if self._can_draw_more():
+                self._draw(content)
+            else:
+                self._draw(content)  # Off by one error (or two?)
+                last_cursor = index + 1
+                break
 
         while True:
             key = self.screen.getch()
@@ -173,3 +212,22 @@ class NotificationDetail(ListScroller):
                 self.screen.clear()
                 self.screen.refresh()
                 break
+            elif key == ord('j'):
+                last_cursor = self._scroll(last_cursor, 1)
+            elif key == ord('k'):
+                last_cursor = self._scroll(last_cursor, -1)
+
+    def _scroll(self, last_cursor, direction):
+        max_y, max_x = self._get_max_coordinates()
+        if direction > 0 and last_cursor < len(self._visible_content):
+            self.screen.scroll(direction)
+            self.screen.move(max_y-1, 0)
+            self._draw(self._visible_content[last_cursor])
+        elif direction < 0 and last_cursor - max_y > 0:
+            self.screen.scroll(direction)
+            self.screen.move(0, 0)
+            self._draw(self._visible_content[last_cursor - max_y - 1])
+        last_cursor += direction
+        current_y, current_x = self._get_current_coordinates()
+        self.screen.move(current_y, 0)
+        return last_cursor
