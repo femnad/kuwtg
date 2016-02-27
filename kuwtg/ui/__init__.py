@@ -4,7 +4,7 @@ import logging
 import os
 import os.path
 
-from kuwtg.utils import break_lines
+from kuwtg.utils import break_lines, render_lines
 
 
 class CursesObject(object):
@@ -118,15 +118,9 @@ class ListScroller(CursesObject):
         self.log("max x: {x}, max y {y}, last_y {last}",
                  {"x": max_x, "y": max_y, "last": self._last_y_coordinate})
 
-    def _render_lines(self, comment_body):
-        return ' '.join([line
-                         for line in comment_body.split('\r\n')
-                         if len(line) > 0])
-
     def _render_lines_as_is(self, comment_body):
         max_y, max_x = self._get_max_coordinates()
-        rendered_lines = ''.join([line for line in comment_body.split('\r\n')
-                                  if len(line) > 0])
+        rendered_lines = render_lines(comment_body)
         broken_lines = break_lines(rendered_lines, max_x)
         logging.debug(broken_lines)
         return [Drawable(line) for line in broken_lines]

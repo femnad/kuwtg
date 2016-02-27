@@ -15,3 +15,9 @@ def _break_lines(item, max_length):
 
 def break_lines(item, max_length):
     return [line for line in _break_lines(item, max_length) if len(line) > 0]
+
+def render_lines(lines):
+    line_break = '\r\n' if lines.find('\r\n') >= 0 else '\n'
+    return ' '.join([line
+                     for line in lines.split(line_break)
+                     if len(line) > 0])
