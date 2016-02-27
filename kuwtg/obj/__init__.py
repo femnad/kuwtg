@@ -1,4 +1,5 @@
 # Package: kuwtg.obj
+import datetime
 
 
 class GithubNotification(object):
@@ -35,11 +36,17 @@ class GithubNotification(object):
 
 class GithubComment(object):
 
+    INPUT_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+    OUTPUT_DATE_FORMAT = '%F %T'
+
     def __init__(self, comment):
         user = comment['user']['login']
         body = comment['body']
         self._user = user
         self._body = body
+        created_at = comment['created_at']
+        self._created_at = datetime.datetime.strptime(
+            created_at, self.INPUT_DATE_FORMAT)
 
     @property
     def user(self):
@@ -48,3 +55,7 @@ class GithubComment(object):
     @property
     def body(self):
         return self._body
+
+    @property
+    def created_at(self):
+        return self._created_at.strftime(self.OUTPUT_DATE_FORMAT)

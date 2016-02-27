@@ -4,6 +4,8 @@ import logging
 import os
 import os.path
 
+from kuwtg.config.configuration import Configuration
+from kuwtg.ui.drawables import Drawable, DrawableList, HorizontalSpace
 from kuwtg.utils import break_lines, render_lines
 
 
@@ -22,6 +24,32 @@ class CursesObject(object):
         self.screen.clear()
         self.screen.scrollok(1)
 
+    def _set_logger(self, logger_name):
+        configuration = Configuration()
+        log_file = configuration.log_file
+        print(log_file)
+        log_dir = os.path.dirname(log_file)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(log_file)
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter
+        formatter = logging.Formatter('%(asctime)s %(message)s')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+        self.logger = logger
+
+    def log(self, message, variables=None):
+        if variables is None:
+            variables = {}
+        if isinstance(message, str):
+            formatted_message = message.format(**variables)
+            self.logger.debug(formatted_message)
+        else:
+            self.logger.debug(message)
+
     def cleanup(self):
         curses.nocbreak()
         curses.echo()
@@ -38,7 +66,7 @@ class CursesObject(object):
     def _display_single_item(self, item, limit_length=True, new_line=True,
                              attribute=None, start_coordinates=None):
         display = self.screen.addnstr \
-                  if limit_length else self.screen.addstr
+            if limit_length else self.screen.addstr
         display_args = []
         if start_coordinates is not None:
             display_args.extend(start_coordinates)
@@ -82,33 +110,12 @@ class CursesObject(object):
 
 class ListScroller(CursesObject):
 
-    DEFAULT_LOG_FILE = '~/.local/share/kuwtg/logs/kuwtg.log'
-
     def __init__(self, list_contents, log_file=None):
         super(ListScroller, self).__init__()
         self._list_contents = list_contents
         self._list_length = len(self._list_contents)
         self._list_cursor = 0
-        self.logger = self._get_logger(log_file)
-
-    def _get_logger(self, file_name):
-        if file_name is None:
-            file_name = os.path.expanduser(self.DEFAULT_LOG_FILE)
-            log_dir = os.path.dirname(file_name)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler(file_name)
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
-        return logger
-
-    def log(self, message, variables=None):
-        if variables is None:
-            variables = {}
-        formatted_message = message.format(**variables)
-        self.logger.debug(formatted_message)
+        self.logger = self._set_logger(__name__)
 
     def debug(self):
         current_y, current_x = self._get_current_coordinates()
@@ -126,21 +133,6 @@ class ListScroller(CursesObject):
         return [Drawable(line) for line in broken_lines]
 
 
-class Drawable(object):
-
-    def __init__(self, content, attribute=curses.A_NORMAL):
-        self._content = content
-        self._attribute = attribute
-
-    @property
-    def content(self):
-        return self._content
-
-    @property
-    def attribute(self):
-        return self._attribute
-
-
 class NotificationDetail(ListScroller):
 
     def __init__(self, notification_item, notification_starter, comments):
@@ -149,6 +141,7 @@ class NotificationDetail(ListScroller):
         self._notification_starter = notification_starter
         self._comments = comments
         self._visible_content = []
+        self._set_logger(__name__)
 
     def _add_to_visible_content(self, drawable):
         if isinstance(drawable, list):
@@ -156,10 +149,14 @@ class NotificationDetail(ListScroller):
         else:
             self._visible_content.append(drawable)
 
-    def _draw(self, drawable):
+    def _draw_line(self, line):
         current_y, current_x = self._get_current_coordinates()
         max_y, max_x = self._get_max_coordinates()
-        self.screen.addstr(drawable.content, drawable.attribute)
+        if isinstance(line, Drawable):
+            self.screen.addstr(line.content, line.attribute)
+        elif isinstance(line, DrawableList):
+            for drawable in line.drawables:
+                self.screen.addstr(drawable.content, drawable.attribute)
         if current_y < max_y - 1:
             self.screen.move(current_y+1, 0)
         else:
@@ -175,18 +172,21 @@ class NotificationDetail(ListScroller):
         self.screen.refresh()
         self._add_to_visible_content(Drawable(
             self._notification_item.repo_name, attribute=curses.color_pair(1)))
-        self._add_to_visible_content(
+        self._add_to_visible_content(DrawableList(
             Drawable("{}: ".format(self._notification_item.notification_type),
-                     curses.color_pair(2)))
-        self._add_to_visible_content(Drawable(
-            self._notification_item.title, curses.A_UNDERLINE))
+                     curses.color_pair(2)),
+            Drawable(self._notification_item.title,
+                     curses.A_UNDERLINE)))
         self._add_to_visible_content(Drawable(
             self._notification_starter.user, curses.color_pair(4)))
         lines = self._render_lines_as_is(self._notification_starter.body)
         self._add_to_visible_content(lines)
 
         for comment in self._comments:
-            comment_drawable = Drawable(comment.user, curses.color_pair(4))
+            comment_drawable = DrawableList(Drawable(comment.user,
+                                                     curses.color_pair(4)),
+                                            HorizontalSpace(length=5),
+                                            Drawable(comment.created_at))
             self._add_to_visible_content(comment_drawable)
             rendered_comment = self._render_lines_as_is(comment.body)
             self._add_to_visible_content(rendered_comment)
@@ -194,9 +194,9 @@ class NotificationDetail(ListScroller):
         last_cursor = 0
         for index, content in enumerate(self._visible_content):
             if self._can_draw_more():
-                self._draw(content)
+                self._draw_line(content)
             else:
-                self._draw(content)  # Off by one error (or two?)
+                self._draw_line(content)  # Off by one error (or two?)
                 last_cursor = index + 1
                 break
 
@@ -216,11 +216,11 @@ class NotificationDetail(ListScroller):
         if direction > 0 and last_cursor < len(self._visible_content):
             self.screen.scroll(direction)
             self.screen.move(max_y-1, 0)
-            self._draw(self._visible_content[last_cursor])
+            self._draw_line(self._visible_content[last_cursor])
         elif direction < 0 and last_cursor - max_y > 0:
             self.screen.scroll(direction)
             self.screen.move(0, 0)
-            self._draw(self._visible_content[last_cursor - max_y - 1])
+            self._draw_line(self._visible_content[last_cursor - max_y - 1])
         last_cursor += direction
         current_y, current_x = self._get_current_coordinates()
         self.screen.move(current_y, 0)
