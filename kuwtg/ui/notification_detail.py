@@ -67,7 +67,7 @@ class NotificationDetail(CursesObject):
 
         for comment in self._comments:
             comment_drawable = DrawableList(
-                Drawable(comment.user, self._get_color(Colors.yellow)),
+                Drawable(comment.user, self._get_color(Colors.blue)),
                 HorizontalSpace(length=5),
                 Drawable(comment.created_at, self._get_color(Colors.yellow)))
             self._add_to_visible_content(comment_drawable)
@@ -96,15 +96,19 @@ class NotificationDetail(CursesObject):
 
     def _scroll(self, last_cursor, direction):
         max_y, max_x = self._get_max_coordinates()
+        moved = False
         if direction > 0 and last_cursor < len(self._visible_content):
             self.screen.scroll(direction)
             self.screen.move(max_y-1, 0)
             self._draw_line(self._visible_content[last_cursor])
-        elif direction < 0 and last_cursor - max_y > 0:
+            moved = True
+        elif direction < 0:
             self.screen.scroll(direction)
             self.screen.move(0, 0)
             self._draw_line(self._visible_content[last_cursor - max_y - 1])
-        last_cursor += direction
-        current_y, current_x = self._get_current_coordinates()
-        self.screen.move(current_y, 0)
+            moved = True
+        if moved:
+            last_cursor += direction
+            current_y, current_x = self._get_current_coordinates()
+            self.screen.move(current_y, 0)
         return last_cursor

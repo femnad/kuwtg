@@ -27,7 +27,7 @@ Put your access token in `~/.config/kuwtg/kuwtg.conf` thusly:
 
 The access token must be permitted to access your notifications.
 
-Use 'k' and 'j' to navigate up and down in the list view, 'l' to view the current notification, 'q' to quit. In the notification detail 'h' or 'q' to navigate back to the list.
+Use 'k' and 'j' to navigate up and down in the list view, 'l' to view the current notification, 'q' to quit. In the notification detail 'k' and 'j' for up and down scrolling, 'h' or 'q' to navigate back to the list.
 
 Requires?
 ---------
