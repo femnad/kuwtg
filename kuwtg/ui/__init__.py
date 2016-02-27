@@ -1,12 +1,29 @@
 # Package: kuwtg.ui
 import curses
+from enum import Enum
 import logging
 import os
 import os.path
 
 from kuwtg.config.configuration import Configuration
-from kuwtg.ui.drawables import Drawable, DrawableList, HorizontalSpace
-from kuwtg.utils import break_lines, render_lines
+from kuwtg.utils import break_lines
+
+
+class Colors(Enum):
+    black = 0
+    red = 1
+    green = 2
+    yellow = 3
+    blue = 4
+    magenta = 5
+    cyan = 6
+    white = 7
+    black_on_magenta = 8
+
+
+class Attributes(Enum):
+    normal = curses.A_NORMAL
+    underlined = curses.A_UNDERLINE
 
 
 class CursesObject(object):
@@ -15,19 +32,29 @@ class CursesObject(object):
         self.screen = curses.initscr()
         curses.cbreak()
         curses.noecho()
-        curses.start_color()
-        curses.use_default_colors()
-        curses.init_pair(1, curses.COLOR_RED, -1)
-        curses.init_pair(2, curses.COLOR_GREEN, -1)
-        curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_MAGENTA)
-        curses.init_pair(4, curses.COLOR_BLUE, -1)
+        self._initialize_colors()
         self.screen.clear()
         self.screen.scrollok(1)
+
+    def _initialize_colors(self):
+        curses.start_color()
+        curses.use_default_colors()
+        curses.init_pair(Colors.red.value, curses.COLOR_RED, -1)
+        curses.init_pair(Colors.green.value, curses.COLOR_GREEN, -1)
+        curses.init_pair(Colors.yellow.value, curses.COLOR_YELLOW, -1)
+        curses.init_pair(Colors.blue.value, curses.COLOR_BLUE, -1)
+        curses.init_pair(Colors.black_on_magenta.value, curses.COLOR_BLACK,
+                         curses.COLOR_MAGENTA)
+
+    def _get_color(self, color):
+        return curses.color_pair(color.value)
+
+    def _get_attribute(self, attribute):
+        return attribute.value
 
     def _set_logger(self, logger_name):
         configuration = Configuration()
         log_file = configuration.log_file
-        print(log_file)
         log_dir = os.path.dirname(log_file)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
@@ -106,122 +133,3 @@ class CursesObject(object):
 
     def _get_current_item(self):
         return self._list_contents[self._list_cursor]
-
-
-class ListScroller(CursesObject):
-
-    def __init__(self, list_contents, log_file=None):
-        super(ListScroller, self).__init__()
-        self._list_contents = list_contents
-        self._list_length = len(self._list_contents)
-        self._list_cursor = 0
-        self.logger = self._set_logger(__name__)
-
-    def debug(self):
-        current_y, current_x = self._get_current_coordinates()
-        self.log("x: {x}, y: {y}, cursor: {c}",
-                 {"y": current_y, "x": current_x, "c": self._list_cursor})
-        max_y, max_x = self._get_max_coordinates()
-        self.log("max x: {x}, max y {y}, last_y {last}",
-                 {"x": max_x, "y": max_y, "last": self._last_y_coordinate})
-
-    def _render_lines_as_is(self, comment_body):
-        max_y, max_x = self._get_max_coordinates()
-        rendered_lines = render_lines(comment_body)
-        broken_lines = break_lines(rendered_lines, max_x)
-        logging.debug(broken_lines)
-        return [Drawable(line) for line in broken_lines]
-
-
-class NotificationDetail(ListScroller):
-
-    def __init__(self, notification_item, notification_starter, comments):
-        super(NotificationDetail, self).__init__(comments)
-        self._notification_item = notification_item
-        self._notification_starter = notification_starter
-        self._comments = comments
-        self._visible_content = []
-        self._set_logger(__name__)
-
-    def _add_to_visible_content(self, drawable):
-        if isinstance(drawable, list):
-            self._visible_content.extend(drawable)
-        else:
-            self._visible_content.append(drawable)
-
-    def _draw_line(self, line):
-        current_y, current_x = self._get_current_coordinates()
-        max_y, max_x = self._get_max_coordinates()
-        if isinstance(line, Drawable):
-            self.screen.addstr(line.content, line.attribute)
-        elif isinstance(line, DrawableList):
-            for drawable in line.drawables:
-                self.screen.addstr(drawable.content, drawable.attribute)
-        if current_y < max_y - 1:
-            self.screen.move(current_y+1, 0)
-        else:
-            self.screen.move(current_y, 0)
-
-    def _can_draw_more(self):
-        current_y, current_x = self._get_current_coordinates()
-        max_y, max_x = self._get_max_coordinates()
-        return current_y < max_y - 1
-
-    def draw(self):
-        self.screen.clear()
-        self.screen.refresh()
-        self._add_to_visible_content(Drawable(
-            self._notification_item.repo_name, attribute=curses.color_pair(1)))
-        self._add_to_visible_content(DrawableList(
-            Drawable("{}: ".format(self._notification_item.notification_type),
-                     curses.color_pair(2)),
-            Drawable(self._notification_item.title,
-                     curses.A_UNDERLINE)))
-        self._add_to_visible_content(Drawable(
-            self._notification_starter.user, curses.color_pair(4)))
-        lines = self._render_lines_as_is(self._notification_starter.body)
-        self._add_to_visible_content(lines)
-
-        for comment in self._comments:
-            comment_drawable = DrawableList(Drawable(comment.user,
-                                                     curses.color_pair(4)),
-                                            HorizontalSpace(length=5),
-                                            Drawable(comment.created_at))
-            self._add_to_visible_content(comment_drawable)
-            rendered_comment = self._render_lines_as_is(comment.body)
-            self._add_to_visible_content(rendered_comment)
-
-        last_cursor = 0
-        for index, content in enumerate(self._visible_content):
-            if self._can_draw_more():
-                self._draw_line(content)
-            else:
-                self._draw_line(content)  # Off by one error (or two?)
-                last_cursor = index + 1
-                break
-
-        while True:
-            key = self.screen.getch()
-            if key in [ord('q'), ord('h')]:
-                self.screen.clear()
-                self.screen.refresh()
-                break
-            elif key == ord('j'):
-                last_cursor = self._scroll(last_cursor, 1)
-            elif key == ord('k'):
-                last_cursor = self._scroll(last_cursor, -1)
-
-    def _scroll(self, last_cursor, direction):
-        max_y, max_x = self._get_max_coordinates()
-        if direction > 0 and last_cursor < len(self._visible_content):
-            self.screen.scroll(direction)
-            self.screen.move(max_y-1, 0)
-            self._draw_line(self._visible_content[last_cursor])
-        elif direction < 0 and last_cursor - max_y > 0:
-            self.screen.scroll(direction)
-            self.screen.move(0, 0)
-            self._draw_line(self._visible_content[last_cursor - max_y - 1])
-        last_cursor += direction
-        current_y, current_x = self._get_current_coordinates()
-        self.screen.move(current_y, 0)
-        return last_cursor

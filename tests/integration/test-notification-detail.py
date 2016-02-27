@@ -2,7 +2,8 @@
 import json
 
 from kuwtg.obj import GithubNotification, GithubComment
-from kuwtg.ui import NotificationDetail
+from kuwtg.ui.notification_detail import NotificationDetail
+
 
 def _get_json_from_file(file_name):
     with open(file_name) as file_descriptor:

@@ -1,23 +1,27 @@
 # Package kuwtg.ui.notifications
-import curses
 from enum import Enum
 
 from kuwtg.api.consumer.github_api_consumer import GithubAPIConsumer
-from kuwtg.config import Configuration
-from kuwtg.ui import ListScroller, NotificationDetail
+from kuwtg.config.configuration import Configuration
+from kuwtg.ui import Attributes, Colors, CursesObject
+from kuwtg.ui.notification_detail import NotificationDetail
 
 
-class NotificationsList(ListScroller):
+class NotificationsList(CursesObject):
 
     class Modes(Enum):
         list_view = 1
         detail_view = 2
 
-    def __init__(self, list_contents, log_file=None):
-        super(NotificationsList, self).__init__(list_contents, log_file)
+    def __init__(self, list_contents):
+        super(NotificationsList, self).__init__()
+        self._list_contents = list_contents
+        self._list_length = len(self._list_contents)
+        self._list_cursor = 0
         self._mode = self.Modes.list_view
         self._last_y_coordinate = None
         self._configuration = Configuration()
+        self.logger = self._set_logger(__name__)
 
     def _get_current_line(self):
         return self._list_contents[self._list_cursor]
@@ -25,11 +29,12 @@ class NotificationsList(ListScroller):
     def _draw_line(self, highlight=False):
         current_line = self._get_current_line()
         if highlight:
-            self._redraw_line(current_line.title,
-                              attribute=curses.color_pair(3))
+            self._redraw_line(
+                current_line.title, attribute=self._get_color(
+                    Colors.black_on_magenta))
         else:
             self._redraw_line(current_line.title,
-                              attribute=curses.A_NORMAL)
+                              attribute=self._get_attribute(Attributes.normal))
 
     def _highlight_line(self):
         self._draw_line(True)
@@ -134,8 +139,6 @@ class NotificationsList(ListScroller):
         if key == ord('q'):
             self.cleanup()
             return False
-        elif key == ord('d'):
-            self.debug()
         if self._mode == self.Modes.list_view:
             if key == ord('j'):
                 self.move_down()

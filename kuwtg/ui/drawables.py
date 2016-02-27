@@ -1,10 +1,12 @@
-import curses
+from kuwtg.ui import Attributes
 
 
 class Drawable(object):
 
-    def __init__(self, content, attribute=curses.A_NORMAL):
+    def __init__(self, content, attribute=None):
         self._content = content
+        if attribute is None:
+            attribute = Attributes.normal.value
         self._attribute = attribute
 
     @property

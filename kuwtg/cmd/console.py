@@ -1,7 +1,7 @@
 # Package kuwtg.cmd.console
 from kuwtg.api.consumer.github_api_consumer import GithubAPIConsumer
 from kuwtg.api.consumer.exceptions import ResponseNotOkException
-from kuwtg.config import Configuration
+from kuwtg.config.configuration import Configuration
 from kuwtg.obj import GithubNotification
 from kuwtg.ui.notifications import NotificationsList
 
