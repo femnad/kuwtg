@@ -35,6 +35,9 @@ class GithubAPIConsumer(object):
     def get_notification_body(self, url):
         notification = self._get_json_response(url)
         starter_comment = GithubComment(notification)
-        comments_url = notification['comments_url']
-        comments = self._get_comments(comments_url)
+        if 'comments_url' in notification:
+            comments_url = notification['comments_url']
+            comments = self._get_comments(comments_url)
+        else:
+            comments = None
         return starter_comment, comments

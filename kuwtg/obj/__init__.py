@@ -40,7 +40,11 @@ class GithubComment(object):
     OUTPUT_DATE_FORMAT = '%F %T'
 
     def __init__(self, comment):
-        user = comment['user']['login']
+        if 'user' in comment:
+            user_key = 'user'
+        else:
+            user_key = 'author'
+        user = comment[user_key]['login']
         body = comment['body']
         self._user = user
         self._body = body

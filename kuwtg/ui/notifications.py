@@ -46,9 +46,8 @@ class NotificationsList(CursesObject):
         self.screen.clear()
         self.screen.refresh()
         self.screen.move(0, 0)
-        current_y, current_x = self._get_current_coordinates()
-        max_y, max_x = self._get_max_coordinates()
-        draw_until = min(max_y + start_from, self._list_length)
+        max_coords = self._get_max_coordinates()
+        draw_until = min(max_coords.y + start_from, self._list_length)
         for item in self._list_contents[start_from:draw_until-1]:
             self._display_single_item(item.title)
         self._draw_line(highlight=True)
@@ -58,17 +57,17 @@ class NotificationsList(CursesObject):
         self._highlight_line()
 
     def _move_cursor_vertically(self, y_diff):
-        current_y, current_x = self._get_current_coordinates()
-        max_y, max_x = self._get_max_coordinates()
-        new_y = current_y + y_diff
+        current_coords = self._get_current_coordinates()
+        max_coords = self._get_max_coordinates()
+        new_y = current_coords.y + y_diff
         self._unhighlight_line()
         new_cursor_position = self._list_cursor + y_diff
         if 0 <= new_cursor_position < self._list_length:
-            if 0 <= new_y < max_y:  # Moving the cursor is enough
-                self.screen.move(current_y + y_diff, current_x)
+            if 0 <= new_y < max_coords.y:  # Moving the cursor is enough
+                self.screen.move(current_coords.y + y_diff, current_coords.x)
             else:  # We have to scroll
                 self.screen.scroll(y_diff)
-                self.screen.move(current_y, 0)
+                self.screen.move(current_coords.y, 0)
             self._list_cursor += y_diff
         self._highlight_line()
         self.screen.refresh()
@@ -80,21 +79,21 @@ class NotificationsList(CursesObject):
         self._move_cursor_vertically(1)
 
     def move_to_top(self):
-        current_y, current_x = self._get_current_coordinates()
-        self.screen.move(0, current_x)
-        self._list_cursor -= current_y
+        current_coords = self._get_current_coordinates()
+        self.screen.move(0, current_coords.x)
+        self._list_cursor -= current_coords.y
 
     def move_to_bottom(self):
-        current_y, current_x = self._get_current_coordinates()
-        max_y, max_x = self._get_max_coordinates()
-        self.screen.move(max_y - 1, current_x)
-        self._list_cursor += (max_y - current_y - 1)
+        current_coords = self._get_current_coordinates()
+        max_coords = self._get_max_coordinates()
+        self.screen.move(max_coords.y - 1, current_coords.x)
+        self._list_cursor += (max_coords.y - current_coords.y - 1)
 
     def _show_current_notification(self):
         self._unhighlight_line()
         self._mode = self.Modes.detail_view
-        current_y, current_x = self._get_current_coordinates()
-        self._last_y_coordinate = current_y
+        current_coords = self._get_current_coordinates()
+        self._last_y_coordinate = current_coords.y
         current_item = self._get_current_item()
         github_consumer = GithubAPIConsumer(self._configuration.access_token)
         starter, comments = github_consumer.get_notification_body(

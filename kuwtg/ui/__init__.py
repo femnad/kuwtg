@@ -26,6 +26,24 @@ class Attributes(Enum):
     underlined = curses.A_UNDERLINE
 
 
+class Coordinates(object):
+
+    def __init__(self, y=None, x=None):
+        self._y = y
+        self._x = x
+
+    def __str__(self):
+        return "<Coordinates[y={y}, x={y}]>".format(x=self._x, y=self._y)
+
+    @property
+    def y(self):
+        return self._y
+
+    @property
+    def x(self):
+        return self._x
+
+
 class CursesObject(object):
 
     def __init__(self):
@@ -83,12 +101,12 @@ class CursesObject(object):
         curses.endwin()
 
     def _new_line(self):
-        current_y, current_x = self._get_current_coordinates()
-        max_y, max_x = self._get_max_coordinates()
-        if current_y < max_y - 1:
-            self.screen.move(current_y+1, 0)
+        current_coordinates = self._get_current_coordinates()
+        max_coords = self._get_max_coordinates()
+        if current_coordinates.y < max_coords.y - 1:
+            self.screen.move(current_coordinates.y+1, 0)
         else:
-            self.screen.move(current_y, 0)
+            self.screen.move(current_coordinates.y, 0)
 
     def _display_single_item(self, item, limit_length=True, new_line=True,
                              attribute=None, start_coordinates=None):
@@ -99,8 +117,8 @@ class CursesObject(object):
             display_args.extend(start_coordinates)
         display_args.append(item)
         if limit_length:
-            max_y, max_x = self._get_max_coordinates()
-            display_args.append(max_x - 1)
+            max_coords = self._get_max_coordinates()
+            display_args.append(max_coords.x - 1)
         if attribute is not None:
             display_args.append(attribute)
         display(*display_args)
@@ -108,9 +126,9 @@ class CursesObject(object):
             self._new_line()
 
     def _redraw_line(self, item, attribute=None):
-        current_y, current_x = self._get_current_coordinates()
+        current_coords = self._get_current_coordinates()
         self._display_single_item(item,
-                                  start_coordinates=(current_y, 0),
+                                  start_coordinates=(current_coords.y, 0),
                                   attribute=attribute,
                                   new_line=False)
 
@@ -120,16 +138,18 @@ class CursesObject(object):
             self._display_single_item(item, limit_length, new_line, attributes)
 
     def _display_multiline_item(self, item, attribute=None):
-        max_y, max_x = self._get_max_coordinates()
-        broken_lines = break_lines(item, max_x)
+        max_coords = self._get_max_coordinates()
+        broken_lines = break_lines(item, max_coords.x)
         for line in broken_lines:
             self._display_single_item(line, attribute=attribute)
 
     def _get_max_coordinates(self):
-        return self.screen.getmaxyx()
+        max_y, max_x = self.screen.getmaxyx()
+        return Coordinates(y=max_y, x=max_x)
 
     def _get_current_coordinates(self):
-        return self.screen.getyx()
+        current_y, current_x = self.screen.getyx()
+        return Coordinates(y=current_y, x=current_x)
 
     def _get_current_item(self):
         return self._list_contents[self._list_cursor]
