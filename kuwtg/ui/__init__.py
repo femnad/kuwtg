@@ -86,6 +86,12 @@ class CursesObject(object):
         logger.addHandler(fh)
         self.logger = logger
 
+    def _move(self, coordinates):
+        self.screen.move(coordinates.y, coordinates.x)
+
+    def _scroll(self, direction):
+        self.screen.scroll(direction)
+
     def log(self, message, variables=None):
         if variables is None:
             variables = {}
