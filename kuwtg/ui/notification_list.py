@@ -8,14 +8,14 @@ from kuwtg.ui.drawable_container import DrawableContainer
 from kuwtg.ui.notification_detail import NotificationDetail
 
 
-class NotificationsList(DrawableContainer):
+class NotificationList(DrawableContainer):
 
     class Modes(Enum):
         list_view = 1
         detail_view = 2
 
     def __init__(self, list_contents):
-        super(NotificationsList, self).__init__()
+        super(NotificationList, self).__init__()
         self._mode = self.Modes.list_view
         self._configuration = Configuration()
         self.logger = self._set_logger(__name__)
@@ -24,7 +24,7 @@ class NotificationsList(DrawableContainer):
                                           embedded_object=content))
 
     def _get_current_item(self):
-        return self._content[self._cursor]
+        return self._content[self._cursor - 1]  # Venerable off by one error
 
     def draw(self):
         self._render()
