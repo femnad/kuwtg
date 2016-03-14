@@ -3,11 +3,12 @@ from kuwtg.ui import Attributes
 
 class Drawable(object):
 
-    def __init__(self, content, attribute=None):
+    def __init__(self, content, attribute=None, embedded_object=None):
         self._content = content
         if attribute is None:
             attribute = Attributes.normal.value
         self._attribute = attribute
+        self._embedded_object = embedded_object
 
     @property
     def content(self):
@@ -16,6 +17,10 @@ class Drawable(object):
     @property
     def attribute(self):
         return self._attribute
+
+    @property
+    def embedded_object(self):
+        return self._embedded_object
 
 
 class DrawableList(object):

@@ -156,6 +156,3 @@ class CursesObject(object):
     def _get_current_coordinates(self):
         current_y, current_x = self.screen.getyx()
         return Coordinates(y=current_y, x=current_x)
-
-    def _get_current_item(self):
-        return self._list_contents[self._list_cursor]

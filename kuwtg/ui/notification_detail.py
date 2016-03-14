@@ -1,6 +1,6 @@
-from kuwtg.ui import Attributes, Colors, Coordinates
+from kuwtg.ui import Attributes, Colors
 from kuwtg.ui.drawables import Drawable, DrawableList, HorizontalSpace
-from kuwtg.ui.drawable_list import DrawableContainer
+from kuwtg.ui.drawable_container import DrawableContainer
 
 
 class NotificationDetail(DrawableContainer):
@@ -47,13 +47,7 @@ class NotificationDetail(DrawableContainer):
                 rendered_comment = self._get_rendered_lines(comment.body)
                 self._add_to_content(rendered_comment)
 
-        for index, content in enumerate(self._content):
-            if self._can_draw_more():
-                self._draw_line(content)
-            else:
-                self._draw_line(content)
-                self._cursor = index + 1
-                break
+        self._render()
 
         while True:
             key = self.screen.getch()
@@ -67,38 +61,3 @@ class NotificationDetail(DrawableContainer):
                 self._move_cursor(-1)
             elif key == ord('d'):
                 self._debug()
-
-    def _is_movable(self, direction):
-        if direction < 0:
-            return self._cursor > 1
-        elif direction > 0:
-            return self._cursor < len(self._content)
-
-    def _get_next_coordinates(self, direction, scroll):
-        current_coordinates = self._get_current_coordinates()
-        if scroll:
-            return current_coordinates
-        return Coordinates(current_coordinates.y + direction, 0)
-
-    def _should_scroll(self, direction):
-        current_coordinates = self._get_current_coordinates()
-        max_coordinates = self._get_max_coordinates()
-        if direction > 0:
-            return current_coordinates.y == max_coordinates.y - 1
-        elif direction < 0:
-            return current_coordinates.y == 0 and self._cursor > 0
-
-    def _get_next_line(self, direction):
-        return self._content[self._cursor+direction-1]
-
-    def _move_cursor(self, direction):
-        if self._is_movable(direction):
-            should_scroll = self._should_scroll(direction)
-            next_coordinates = self._get_next_coordinates(
-                direction, should_scroll)
-            if should_scroll:
-                self.screen.scroll(direction)
-                next_line = self._get_next_line(direction)
-                self._draw_line(next_line)
-            self._cursor += direction
-            self.screen.move(next_coordinates.y, next_coordinates.x)

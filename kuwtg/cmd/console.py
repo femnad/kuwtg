@@ -14,9 +14,7 @@ def main():
         notifications_list = [GithubNotification(notification)
                               for notification in notifications]
         notification_lister = NotificationsList(notifications_list)
-        notification_lister.display_list()
-        notification_lister.loop()
-        exit(0)
+        notification_lister.draw()
     except ResponseNotOkException as e:
         print("Unexpected response when accessing Github:")
         print(e)
