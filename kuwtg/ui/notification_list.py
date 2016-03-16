@@ -3,9 +3,11 @@ from enum import Enum
 
 from kuwtg.api.consumer.github_api_consumer import GithubAPIConsumer
 from kuwtg.config.configuration import Configuration
+from kuwtg.ui import Coordinates
 from kuwtg.ui.drawables import Drawable
 from kuwtg.ui.drawable_container import DrawableContainer
 from kuwtg.ui.notification_detail import NotificationDetail
+from kuwtg.utils import get_logger
 
 
 class NotificationList(DrawableContainer):
@@ -18,7 +20,7 @@ class NotificationList(DrawableContainer):
         super(NotificationList, self).__init__()
         self._mode = self.Modes.list_view
         self._configuration = Configuration()
-        self.logger = self._set_logger(__name__)
+        self.logger = get_logger(__name__)
         for content in list_contents:
             self._add_to_content(Drawable(content.title,
                                           embedded_object=content))

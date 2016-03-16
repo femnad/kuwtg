@@ -1,6 +1,7 @@
 from kuwtg.ui import Attributes, Colors
 from kuwtg.ui.drawables import Drawable, DrawableList, HorizontalSpace
 from kuwtg.ui.drawable_container import DrawableContainer
+from kuwtg.utils import get_logger
 
 
 class NotificationDetail(DrawableContainer):
@@ -12,7 +13,7 @@ class NotificationDetail(DrawableContainer):
         self._comments = comments
         self._content = []
         self._cursor = 0
-        self._set_logger(__name__)
+        self.logger = get_logger
 
     def draw(self):
         self.screen.clear()

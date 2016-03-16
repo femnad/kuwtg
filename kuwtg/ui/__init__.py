@@ -1,11 +1,7 @@
 # Package: kuwtg.ui
 import curses
 from enum import Enum
-import logging
-import os
-import os.path
 
-from kuwtg.config.configuration import Configuration
 from kuwtg.utils import break_lines
 
 
@@ -70,36 +66,11 @@ class CursesObject(object):
     def _get_attribute(self, attribute):
         return attribute.value
 
-    def _set_logger(self, logger_name):
-        configuration = Configuration()
-        log_file = configuration.log_file
-        log_dir = os.path.dirname(log_file)
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler(log_file)
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter
-        formatter = logging.Formatter('%(asctime)s %(message)s')
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
-        self.logger = logger
-
     def _move(self, coordinates):
         self.screen.move(coordinates.y, coordinates.x)
 
     def _scroll(self, direction):
         self.screen.scroll(direction)
-
-    def log(self, message, variables=None):
-        if variables is None:
-            variables = {}
-        if isinstance(message, str):
-            formatted_message = message.format(**variables)
-            self.logger.debug(formatted_message)
-        else:
-            self.logger.debug(message)
 
     def cleanup(self):
         curses.nocbreak()
