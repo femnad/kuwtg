@@ -36,7 +36,7 @@ def get_logger(module_name):
     log_dir = os.path.dirname(log_file)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    logger = logging.getLogger()
+    logger = logging.getLogger(module_name)
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(log_file)
     fh.setLevel(logging.DEBUG)
